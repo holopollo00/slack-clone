@@ -8,7 +8,7 @@ export const inngest = new Inngest({ id: "slack-clone" });
 const syncUser = inngest.createFunction(
   { id: "sync-user" },
   { event: "clerk/user.created" },
-  async ({ event, step }) => {
+  async ({ event }) => {
     await connectDB();
     const { id, email_addresses, first_name, last_name, image_url } =
       event.data;
@@ -19,7 +19,6 @@ const syncUser = inngest.createFunction(
       image: image_url || "",
     };
     await User.create(newUser);
-    step.log("User created", newUser);
   }
 );
 
