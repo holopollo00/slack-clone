@@ -11,10 +11,6 @@ export const useStreamChat = () => {
   const { user } = useUser();
   const [chatClient, setChatClient] = useState(null);
 
-  console.log("useStreamChat - user:", user);
-  console.log("useStreamChat - user?.id:", user?.id);
-  console.log("useStreamChat - STREAM_API_KEY:", STREAM_API_KEY);
-
   const {
     data: tokenData,
     isLoading,
@@ -24,11 +20,6 @@ export const useStreamChat = () => {
     queryFn: getStreamToken,
     enabled: !!user?.id,
   });
-
-  console.log("useStreamChat - tokenData:", tokenData);
-  console.log("useStreamChat - isLoading:", isLoading);
-  console.log("useStreamChat - error:", error);
-  console.log("useStreamChat - chatClient:", chatClient);
 
   useEffect(() => {
     if (!tokenData?.token || !user?.id || !STREAM_API_KEY) return;
