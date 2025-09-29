@@ -3,6 +3,6 @@ export const protectRoute = (req, res, next) => {
     return res
       .status(401)
       .json({ message: "Unauthorized - you must be logged in" });
-    next();
   }
+  next();
 };
