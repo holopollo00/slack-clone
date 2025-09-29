@@ -13,8 +13,8 @@ export const useStreamChat = () => {
 
   const {
     data: tokenData,
-    isLoading: tokenLoading,
-    error: tokenError,
+    isLoading,
+    error,
   } = useQuery({
     queryKey: ["streamToekn"],
     queryFn: getStreamToken,
@@ -22,39 +22,53 @@ export const useStreamChat = () => {
   });
 
   useEffect(() => {
-    const initChat = async () => {
-      if (!user || !tokenData?.token) return;
-
+    if (!tokenData?.token || !user?.id || !STREAM_API_KEY) return;
+    const client = StreamChat.getInstance(STREAM_API_KEY);
+    let cancelled = false;
+    const connect = async () => {
       try {
-        const client = StreamChat.getInstance(STREAM_API_KEY);
-        await client.connectUser({
-          id: user.id,
-          name: user.fullName,
-          image: user.imageUrl,
-        });
-        setChatClient(client);
+        await client.connectUser(
+          {
+            id: user.id,
+            name:
+              user.fullName ??
+              user.username ??
+              user.primaryEmailAddress?.emailAddress ??
+              user.id,
+            image: user.imageUrl ?? undefined,
+          },
+          tokenData.token
+        );
+        if (!cancelled) {
+          setChatClient(client);
+        }
       } catch (error) {
-        console.error("Error initializing StreamChat:", error);
+        console.log("Error connecting to stream", error);
         Sentry.captureException(error, {
           tags: { component: "useStreamChat" },
           extra: {
-            context: "stream chat connection",
+            context: "stream_chat_connection",
             userId: user?.id,
             streamApiKey: STREAM_API_KEY ? "present" : "missing",
           },
         });
       }
     };
-    initChat();
+    connect();
 
     //cleanup function to disconnect user when component unmounts or user/token changes
     return () => {
-      if (chatClient) {
-        chatClient.disconnectUser();
-        setChatClient(null);
-      }
+      cancelled = true;
+      client.disconnectUser();
     };
-  }, [tokenData, user, chatClient]);
+  }, [
+    tokenData?.token,
+    user?.id,
+    user?.fullName,
+    user?.username,
+    user?.imageUrl,
+    user?.primaryEmailAddress,
+  ]);
 
-  return { chatClient, isLoading: tokenLoading, isError: tokenError };
+  return { chatClient, isLoading, error };
 };
